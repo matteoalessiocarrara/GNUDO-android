@@ -3,6 +3,8 @@ package com.carrara.gnudo;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+
 import com.carrara.gnudo.DbHelper;
 
 
@@ -14,7 +16,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         DbHelper db = DbHelper.getInstance(this);
-        db.getReadableDatabase();
+        db.getTasks().add("Titolo", "Descrizione", 10L, 20L, false);
+        Log.d("README", db.getTasks().getIdList().toString());
     }
 
 }
