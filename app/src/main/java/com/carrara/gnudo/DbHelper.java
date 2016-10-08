@@ -1,6 +1,7 @@
 package com.carrara.gnudo;
 
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -62,7 +63,7 @@ public class DbHelper extends  SQLiteOpenHelper {
                     Columns.Task.modificationTime, Columns.Task.completed, DatabaseUtils.sqlEscapeString(title),
                     DatabaseUtils.sqlEscapeString(description), creationTime, modificationTime, isCompleted? 1 : 0);
             getWritableDatabase().execSQL(sql);
-            
+
             Cursor c = getReadableDatabase().rawQuery("SELECT last_insert_rowid()", null);
             c.moveToFirst();
             return new Task(c.getLong(0));
@@ -73,58 +74,81 @@ public class DbHelper extends  SQLiteOpenHelper {
         }
 
         public void remove(final Long id) {
-            getWritableDatabase().rawQuery("DELETE FROM " + Tables.tasks + " WHERE id=" + id.toString(), null);
+            getWritableDatabase().execSQL("DELETE FROM " + Tables.tasks + " WHERE " + Columns.Task.id
+                    + "=" + id.toString());
         }
     }
-
-
+    
     public class Task {
+        final private Long id;
+
         Task(final Long id) {
-
+            this.id = id;
         }
 
-        public void getId() {
-
+        public Long getId() {
+            return id;
         }
+
+        private Cursor getCursor(final String column) {
+            return getReadableDatabase().query(Tables.tasks, new String[] {column},
+                    Columns.Task.id + "=" + this.id.toString(), null, null, null, null);
+        }
+
 
         public String getTitle() {
-            return "";
+            Cursor c = getCursor(Columns.Task.title); c.moveToFirst();
+            return c.getString(0);
         }
 
         public String getDescription() {
-            return "";
+            Cursor c = getCursor(Columns.Task.description); c.moveToFirst();
+            return c.getString(0);
         }
 
         public Long getCreationTime() {
-            return 0L;
+            Cursor c = getCursor(Columns.Task.creationTime); c.moveToFirst();
+            return c.getLong(0);
         }
 
         public Long getModificationTime() {
-            return 0L;
+            Cursor c = getCursor(Columns.Task.modificationTime); c.moveToFirst();
+            return c.getLong(0);
         }
 
         public Boolean isCompleted() {
-            return false;
+            Cursor c = getCursor(Columns.Task.completed); c.moveToFirst();
+            return c.getInt(0) != 0? true : false;
         }
 
         public void setTitle(final String title) {
-
+            ContentValues c = new ContentValues();
+            c.put(Columns.Task.title, title);
+            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
         }
-
+;
         public void setDescription(final String description) {
-
+            ContentValues c = new ContentValues();
+            c.put(Columns.Task.description, description);
+            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
         }
 
         public void setCreationTime(final Long time) {
-
+            ContentValues c = new ContentValues();
+            c.put(Columns.Task.creationTime, time);
+            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
         }
 
         public void setModificationTime(final Long time) {
-
+            ContentValues c = new ContentValues();
+            c.put(Columns.Task.modificationTime, time);
+            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
         }
 
         public void setStatus(final Boolean isCompleted) {
-
+            ContentValues c = new ContentValues();
+            c.put(Columns.Task.completed, isCompleted);
+            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
         }
     }
 
