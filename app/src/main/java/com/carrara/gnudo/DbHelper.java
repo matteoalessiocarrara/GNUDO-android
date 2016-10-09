@@ -7,14 +7,9 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.support.annotation.NonNull;
-import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 
 public class DbHelper extends  SQLiteOpenHelper {
@@ -23,20 +18,14 @@ public class DbHelper extends  SQLiteOpenHelper {
     public static final String  DB_NAME = "gnudo.db";
     public static final int     DB_VERSION = 1;
 
-    public static class Tables {
-        public static final String tasks = "tasks";
-    }
+    public static final String  TABLES_TASKS = "tasks";
 
-    public static class Columns {
-        public class Task {
-            public static final String id = "_id";
-            public static final String title = "title";
-            public static final String description = "description";
-            public static final String creationTime = "ctime";
-            public static final String modificationTime = "mtime";
-            public static final String completed = "completed";
-        }
-    }
+    public static final String  COLUMNS_TASK_ID = "_id";
+    public static final String  COLUMNS_TASK_TITLE = "title";
+    public static final String  COLUMNS_TASK_DESCRIPTION = "description";
+    public static final String  COLUMNS_TASK_CREATION_TIME = "ctime";
+    public static final String  COLUMNS_TASK_MODIFICATION_TIME = "mtime";
+    public static final String  COLUMNS_TASK_IS_COMPLETED = "completed";
 
 
     /********************* SOTTOCLASSI ****************************/
@@ -44,7 +33,8 @@ public class DbHelper extends  SQLiteOpenHelper {
 
     public class Tasks {
         public List<Long> getIdList() {
-            Cursor c = getReadableDatabase().rawQuery("SELECT " + Columns.Task.id + " FROM " + Tables.tasks, null);
+            Cursor c = getReadableDatabase().query(TABLES_TASKS, new String[] {COLUMNS_TASK_ID}, null,
+                    null, null, null, null);
             List<Long> r = new ArrayList<Long>();
 
             if (c.moveToFirst()) {
@@ -59,8 +49,8 @@ public class DbHelper extends  SQLiteOpenHelper {
         public Task add(final String title, final String description, final Long creationTime,
                         final Long modificationTime, final Boolean isCompleted) {
             final String sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (\"%s\", \"%s\", %d, %d, %d)",
-                    Tables.tasks, Columns.Task.title, Columns.Task.description, Columns.Task.creationTime,
-                    Columns.Task.modificationTime, Columns.Task.completed, DatabaseUtils.sqlEscapeString(title),
+                    TABLES_TASKS, COLUMNS_TASK_TITLE, COLUMNS_TASK_DESCRIPTION, COLUMNS_TASK_CREATION_TIME,
+                    COLUMNS_TASK_MODIFICATION_TIME, COLUMNS_TASK_IS_COMPLETED, DatabaseUtils.sqlEscapeString(title),
                     DatabaseUtils.sqlEscapeString(description), creationTime, modificationTime, isCompleted? 1 : 0);
             getWritableDatabase().execSQL(sql);
 
@@ -74,81 +64,78 @@ public class DbHelper extends  SQLiteOpenHelper {
         }
 
         public void remove(final Long id) {
-            getWritableDatabase().execSQL("DELETE FROM " + Tables.tasks + " WHERE " + Columns.Task.id
-                    + "=" + id.toString());
+            getWritableDatabase().delete(TABLES_TASKS, COLUMNS_TASK_ID + "=" + id.toString(), null);
         }
     }
-    
+
     public class Task {
-        final private Long id;
+        final private Long ID;
+        final private String WHERE_CLAUSE;
 
         Task(final Long id) {
-            this.id = id;
+            ID = id;
+            WHERE_CLAUSE = String.format("%s=%d", COLUMNS_TASK_ID, id);
         }
 
         public Long getId() {
-            return id;
+            return ID;
         }
 
-        private Cursor getCursor(final String column) {
-            return getReadableDatabase().query(Tables.tasks, new String[] {column},
-                    Columns.Task.id + "=" + this.id.toString(), null, null, null, null);
+        private Cursor getColumn(final String column) {
+            Cursor c = getReadableDatabase().query(TABLES_TASKS, new String[] {column}, WHERE_CLAUSE,
+                    null, null, null, null);
+            c.moveToFirst();
+            return c;
         }
-
 
         public String getTitle() {
-            Cursor c = getCursor(Columns.Task.title); c.moveToFirst();
-            return c.getString(0);
+            return getColumn(COLUMNS_TASK_TITLE).getString(0);
         }
 
         public String getDescription() {
-            Cursor c = getCursor(Columns.Task.description); c.moveToFirst();
-            return c.getString(0);
+            return getColumn(COLUMNS_TASK_DESCRIPTION).getString(0);
         }
 
         public Long getCreationTime() {
-            Cursor c = getCursor(Columns.Task.creationTime); c.moveToFirst();
-            return c.getLong(0);
+            return getColumn(COLUMNS_TASK_CREATION_TIME).getLong(0);
         }
 
         public Long getModificationTime() {
-            Cursor c = getCursor(Columns.Task.modificationTime); c.moveToFirst();
-            return c.getLong(0);
+            return getColumn(COLUMNS_TASK_MODIFICATION_TIME).getLong(0);
         }
 
         public Boolean isCompleted() {
-            Cursor c = getCursor(Columns.Task.completed); c.moveToFirst();
-            return c.getInt(0) != 0? true : false;
+            return getColumn(COLUMNS_TASK_IS_COMPLETED).getInt(0) != 0? true : false;
         }
 
         public void setTitle(final String title) {
             ContentValues c = new ContentValues();
-            c.put(Columns.Task.title, title);
-            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
+            c.put(COLUMNS_TASK_TITLE, title);
+            getWritableDatabase().update(TABLES_TASKS, c, WHERE_CLAUSE, null);
         }
-;
+
         public void setDescription(final String description) {
             ContentValues c = new ContentValues();
-            c.put(Columns.Task.description, description);
-            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
+            c.put(COLUMNS_TASK_DESCRIPTION, description);
+            getWritableDatabase().update(TABLES_TASKS, c, WHERE_CLAUSE, null);
         }
 
         public void setCreationTime(final Long time) {
             ContentValues c = new ContentValues();
-            c.put(Columns.Task.creationTime, time);
-            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
+            c.put(COLUMNS_TASK_CREATION_TIME, time);
+            getWritableDatabase().update(TABLES_TASKS, c, WHERE_CLAUSE, null);
         }
 
         public void setModificationTime(final Long time) {
             ContentValues c = new ContentValues();
-            c.put(Columns.Task.modificationTime, time);
-            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
+            c.put(COLUMNS_TASK_MODIFICATION_TIME, time);
+            getWritableDatabase().update(TABLES_TASKS, c, WHERE_CLAUSE, null);
         }
 
         public void setStatus(final Boolean isCompleted) {
             ContentValues c = new ContentValues();
-            c.put(Columns.Task.completed, isCompleted);
-            getWritableDatabase().update(Tables.tasks, c, Columns.Task.id + "=" + this.id.toString(), null);
+            c.put(COLUMNS_TASK_IS_COMPLETED, isCompleted);
+            getWritableDatabase().update(TABLES_TASKS, c, WHERE_CLAUSE, null);
         }
     }
 
@@ -166,14 +153,14 @@ public class DbHelper extends  SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
 
-        final String sql = "CREATE TABLE  IF NOT EXISTS " + Tables.tasks +
+        final String sql = "CREATE TABLE  IF NOT EXISTS " + TABLES_TASKS +
                 "(" +
-                Columns.Task.id + " INTEGER PRIMARY KEY," +
-                Columns.Task.title + " TEXT NOT NULL," +
-                Columns.Task.description + " TEXT," +
-                Columns.Task.creationTime + " INTEGER NOT NULL," +
-                Columns.Task.modificationTime + " INTEGER NOT NULL," +
-                Columns.Task.completed + " INTEGER NOT NULL" +
+                COLUMNS_TASK_ID + " INTEGER PRIMARY KEY," +
+                COLUMNS_TASK_TITLE + " TEXT NOT NULL," +
+                COLUMNS_TASK_DESCRIPTION + " TEXT," +
+                COLUMNS_TASK_CREATION_TIME + " INTEGER NOT NULL," +
+                COLUMNS_TASK_MODIFICATION_TIME + " INTEGER NOT NULL," +
+                COLUMNS_TASK_IS_COMPLETED + " INTEGER NOT NULL" +
                 ");";
 
         db.execSQL(sql);
